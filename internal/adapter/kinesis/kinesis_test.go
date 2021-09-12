@@ -1,6 +1,7 @@
 package kinesis_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -47,8 +48,7 @@ func TestPublishWithOutPartitionKeySuccess(t *testing.T) {
 		EncryptionType: aws.String("asdf23"),
 	}
 	awsKinesisClientMocked := awsKinesisMock{
-		response:        &kinesisRecordOutput,
-		receivedRecords: make([]*kinesis.PutRecordInput, 0),
+		response: &kinesisRecordOutput,
 	}
 	partitionKey := ""
 	message := []byte(rawMessage)
@@ -65,6 +65,34 @@ func TestPublishWithOutPartitionKeySuccess(t *testing.T) {
 	assert.Empty(t, receivedRecord.ExplicitHashKey)
 }
 
+func TestPublishWithOutPartitionKeyFailed(t *testing.T) {
+	expectedReceivedRecords := 1
+	rawMessage := `{"name":"fernando"}`
+	streamName := "orders"
+	kinesisRecordOutput := kinesis.PutRecordOutput{
+		ShardId:        aws.String("123"),
+		SequenceNumber: aws.String("321"),
+		EncryptionType: aws.String("asdf23"),
+	}
+	awsKinesisClientMocked := awsKinesisMock{
+		response: &kinesisRecordOutput,
+		err:      errors.New("unexpected error"),
+	}
+	partitionKey := ""
+	message := []byte(rawMessage)
+	kinesisClient := pubsubkinesis.NewClient(streamName, &awsKinesisClientMocked)
+
+	err := kinesisClient.Publish(message, partitionKey)
+
+	assert.Error(t, err)
+	assert.NotEmpty(t, awsKinesisClientMocked.receivedRecords)
+	assert.Equal(t, expectedReceivedRecords, len(awsKinesisClientMocked.receivedRecords))
+	receivedRecord := awsKinesisClientMocked.receivedRecords[0]
+	assert.Equal(t, rawMessage, string(receivedRecord.Data))
+	assert.NotEmpty(t, receivedRecord.PartitionKey)
+	assert.Empty(t, receivedRecord.ExplicitHashKey)
+}
+
 type awsKinesisMock struct {
 	receivedRecords []*kinesis.PutRecordInput
 	response        *kinesis.PutRecordOutput
@@ -72,9 +100,9 @@ type awsKinesisMock struct {
 }
 
 func (a *awsKinesisMock) PutRecord(record *kinesis.PutRecordInput) (*kinesis.PutRecordOutput, error) {
+	a.receivedRecords = append(a.receivedRecords, record)
 	if a.err != nil {
 		return nil, a.err
 	}
-	a.receivedRecords = append(a.receivedRecords, record)
 	return a.response, nil
 }
