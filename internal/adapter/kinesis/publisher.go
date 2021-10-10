@@ -9,22 +9,22 @@ import (
 	vmwarekcl "github.com/vmware/vmware-go-kcl/clientlibrary/utils"
 )
 
-// API defines kinesis client behavior
-type API interface {
+// RecordPublisher defines kinesis publisher client behavior
+type RecordPublisher interface {
 	PutRecord(*kinesis.PutRecordInput) (*kinesis.PutRecordOutput, error)
 }
 
-// Client contains data to connect to kinesis streaming service
-type Client struct {
+// PublisherClient contains data to connect to kinesis streaming service
+type PublisherClient struct {
 	streamName    string
-	kinesisClient API
+	kinesisClient RecordPublisher
 }
 
 // NewClient creates a new kinesis client.
-func NewClient(streamName string, kinesisClient API) *Client {
-	log.Println("msg", "creating new kinesis client")
+func NewClient(streamName string, kinesisClient RecordPublisher) *PublisherClient {
+	log.Println("level", "INFO", "msg", "creating new kinesis client")
 
-	newClient := Client{
+	newClient := PublisherClient{
 		kinesisClient: kinesisClient,
 	}
 
@@ -32,7 +32,7 @@ func NewClient(streamName string, kinesisClient API) *Client {
 }
 
 // Publish sends a new message into the stream.
-func (c *Client) Publish(message []byte, partitionKey string) error {
+func (c *PublisherClient) Publish(message []byte, partitionKey string) error {
 	log.Println("publishing a new message")
 	input := c.buildPutRecordInput(message, partitionKey)
 
@@ -54,7 +54,7 @@ func (c *Client) Publish(message []byte, partitionKey string) error {
 }
 
 // buildPutRecordInput
-func (c *Client) buildPutRecordInput(message []byte, partitionKey string) *kinesis.PutRecordInput {
+func (c *PublisherClient) buildPutRecordInput(message []byte, partitionKey string) *kinesis.PutRecordInput {
 	input := kinesis.PutRecordInput{
 		Data:         message,
 		StreamName:   aws.String(c.streamName),
