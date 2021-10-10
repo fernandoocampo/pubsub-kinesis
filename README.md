@@ -16,10 +16,11 @@ For information about provisioned throughput in DynamoDB, see Read/Write Capacit
 
 * Concepts
 
-https://docs.aws.amazon.com/streams/latest/dev/shared-throughput-kcl-consumers.html
+    - https://docs.aws.amazon.com/streams/latest/dev/shared-throughput-kcl-consumers.html
 
 * Reference code
-https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/config.go#L161
-https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/config.go#L161
-https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/kcl-config.go#L124
-https://github.com/vmware/vmware-go-kcl/blob/master/test/worker_test.go
+
+    - https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/config.go#L161
+    - https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/config.go#L161
+    - https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/kcl-config.go#L124
+    - https://github.com/vmware/vmware-go-kcl/blob/master/test/worker_test.go
