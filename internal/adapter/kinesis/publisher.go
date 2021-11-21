@@ -25,6 +25,7 @@ func NewClient(streamName string, kinesisClient RecordPublisher) *PublisherClien
 	log.Println("level", "INFO", "msg", "creating new kinesis client")
 
 	newClient := PublisherClient{
+		streamName:    streamName,
 		kinesisClient: kinesisClient,
 	}
 
@@ -61,7 +62,7 @@ func (c *PublisherClient) buildPutRecordInput(message []byte, partitionKey strin
 		PartitionKey: aws.String(vmwarekcl.RandStringBytesMaskImpr(10)),
 	}
 	if partitionKey != "" {
-		input.ExplicitHashKey = &partitionKey
+		// input.ExplicitHashKey = aws.String(partitionKey)
 	}
 	return &input
 }

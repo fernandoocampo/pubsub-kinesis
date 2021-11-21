@@ -12,6 +12,75 @@ If your Amazon Kinesis Data Streams application receives provisioned-throughput 
 
 For information about provisioned throughput in DynamoDB, see Read/Write Capacity Mode and Working with Tables and Data in the Amazon DynamoDB Developer Guide.
 
+## Playing locally
+
+* start localstack
+
+```sh
+docker-compose up --build
+```
+
+* stop localstack
+
+```sh
+docker-compose down
+```
+
+* create stream in kinesis
+
+```sh
+aws kinesis --endpoint-url http://localhost:4566 create-stream --region us-west-2 --stream-name messages  --shard-count 1
+```
+
+* list kinesis streams
+
+```sh
+aws kinesis list-streams --endpoint-url http://localhost:4566 --region us-west-2
+```
+
+* create dynamodb table
+
+```sh
+aws dynamodb create-table \
+--table-name message-test-checkpoint \
+--profile dynamo \
+--attribute-definitions AttributeName=ApplicationName,AttributeType=S AttributeName=ShardID,AttributeType=S \
+--key-schema AttributeName=ApplicationName,KeyType=HASH AttributeName=ShardID,KeyType=RANGE \
+--provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+--endpoint-url http://localhost:4566 --region us-west-2
+```
+
+* read dynamodb table
+
+```sh
+aws dynamodb scan \
+--table-name message-test-checkpoint \
+--endpoint-url http://localhost:4566 \
+--profile dynamo \
+--region us-west-2
+```
+
+* list dynamodb tables
+
+```sh
+aws dynamodb list-tables \
+--endpoint-url http://localhost:4566 \
+--profile dynamo \
+--region us-west-2
+```
+
+* put record manually
+
+```sh
+aws kinesis put-record \
+--endpoint-url http://localhost:4566 \
+--region us-west-2 \
+--stream-name messages \
+--data sampledatarecord \
+--partition-key samplepartitionkey
+```
+
+
 ## References
 
 * Concepts
@@ -23,4 +92,4 @@ For information about provisioned throughput in DynamoDB, see Read/Write Capacit
     - https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/config.go#L161
     - https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/config.go#L161
     - https://github.com/vmware/vmware-go-kcl/blob/515fb0c7c47e073f475806ec145df7eca2afbb62/clientlibrary/config/kcl-config.go#L124
-    - https://github.com/vmware/vmware-go-kcl/blob/master/test/worker_test.go
+    -   

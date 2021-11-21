@@ -22,6 +22,8 @@ type KCLConfiguration struct {
 	StreamName          string
 	RegionName          string
 	WorkerID            string
+	KinesisEndpoint     string
+	DynamoDBEndpoint    string
 	// failoverTimeMillis leases not renewed within this period will be claimed by others
 	FailoverTimeMillis int
 	// leaseRefreshPeriodMillis is the period before the end of lease during which a lease is refreshed by the owner.
@@ -116,6 +118,7 @@ func (r *RecordProcessor) Initialize(input *interfaces.InitializationInput) {
 
 // ProcessRecords Process data records. The Amazon Kinesis Client Library will invoke this method to deliver data records to the
 func (r *RecordProcessor) ProcessRecords(input *interfaces.ProcessRecordsInput) {
+	log.Println("level", "debug", "msg", "processing records")
 	// don't process empty record
 	if len(input.Records) == 0 {
 		return
@@ -140,7 +143,16 @@ func (r *RecordProcessor) ProcessRecords(input *interfaces.ProcessRecordsInput) 
 
 // Shutdown Invoked by the Amazon Kinesis Client Library to indicate it will no longer send data records to this
 // RecordProcessor instance.
-func (r *RecordProcessor) Shutdown(shutdownInput *interfaces.ShutdownInput) {}
+func (r *RecordProcessor) Shutdown(shutdownInput *interfaces.ShutdownInput) {
+	log.Println(
+		"level", "debug",
+		"msg", "shutting record processor down",
+		"reason", aws.StringValue(interfaces.ShutdownReasonMessage(shutdownInput.ShutdownReason)),
+	)
+	if shutdownInput.ShutdownReason == interfaces.TERMINATE {
+		shutdownInput.Checkpointer.Checkpoint(nil)
+	}
+}
 
 // HandlerCreator defines behavior to create instances of Handler
 type HandlerCreator interface {
@@ -177,7 +189,7 @@ type Processor struct {
 
 // NewProcessor creates a new kinesis processor using kcl.
 func NewProcessor(kclWorker KCLWorker) *Processor {
-	log.Println("level", "INFO", "method", "kinesis.NewProcessor", "msg", "creating kinesis procesor")
+	log.Println("level", "INFO", "method", "kinesis.NewProcessor", "msg", "creating kinesis processor")
 
 	newProcessor := Processor{
 		kclWorker: kclWorker,
@@ -191,7 +203,7 @@ func (p *Processor) Start(ctx context.Context) error {
 	log.Println("level", "INFO", "msg", "starting kinesis procesor")
 	select {
 	case <-ctx.Done():
-		p.kclWorker.Shutdown()
+		p.Shutdown()
 		return nil
 	default:
 		err := p.kclWorker.Start()
@@ -199,7 +211,14 @@ func (p *Processor) Start(ctx context.Context) error {
 			log.Println("level", "ERROR", "msg", "something went wrong when trying to start the KCLWorker", "error", err)
 			return errors.New("something went wrong when trying to start the KCLWorker")
 		}
-		log.Println("level", "INFO", "msg", "kinesis procesor started")
+		log.Println("level", "INFO", "msg", "kinesis processor started")
 	}
 	return nil
+}
+
+// Shutdown turn off the processor
+func (p *Processor) Shutdown() {
+	log.Println("level", "INFO", "msg", "shutting down kinesis procesor")
+	p.kclWorker.Shutdown()
+	log.Println("level", "INFO", "msg", "kinesis processor has been stopped")
 }
